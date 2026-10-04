@@ -8,8 +8,6 @@ on:
   schedule:
     - cron: "0 22 * * 0" # воскресенье 22:00 UTC = понедельник 03:00 по Алматы
   workflow_dispatch:
-  push:
-    branches: [feature/backup] # TEMP: проверка до мёржа
 
 jobs:
   backup:
