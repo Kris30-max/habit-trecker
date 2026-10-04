@@ -1,0 +1,38 @@
+name: Backup
+
+# Еженедельный бэкап Supabase. Репозиторий публичный, поэтому дамп шифруется
+# (AES-256, пароль в секрете BACKUP_PASSPHRASE) до загрузки в артефакты.
+# Восстановление — см. CLAUDE.md, раздел «Бэкапы».
+
+on:
+  schedule:
+    - cron: "0 22 * * 0" # воскресенье 22:00 UTC = понедельник 03:00 по Алматы
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump database
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          # pg_dump той же мажорной версии, что и Supabase (17)
+          docker run --rm -e DATABASE_URL postgres:17 \
+            sh -c 'pg_dump "$DATABASE_URL" --schema=public --no-owner --no-privileges -Fc' \
+            > backup.dump
+          test -s backup.dump
+
+      - name: Encrypt
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+            --symmetric --cipher-algo AES256 -o backup.dump.gpg backup.dump <<< "$PASSPHRASE"
+          rm backup.dump
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backup-${{ github.run_number }}
+          path: backup.dump.gpg
+          retention-days: 90
