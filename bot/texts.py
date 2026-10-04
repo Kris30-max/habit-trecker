@@ -55,6 +55,16 @@ DELETE_ASK = "Какую привычку убрать в архив?"
 DELETE_CONFIRM = "Убрать <b>{title}</b> в архив? История отметок сохранится."
 DELETE_DONE = "🗄 <b>{title}</b> в архиве."
 
+# Напоминания (тикер)
+REMINDER = "🔔 Пора: <b>{title}</b>"
+REMINDER_STREAK = "Серия: {days} 🔥 Не прерывай!"
+REMINDER_DONE = "✅ <b>{title}</b> — сделано!"
+REMINDER_DONE_STREAK = "✅ <b>{title}</b> — сделано! Серия: {days} 🔥"
+REMINDER_SKIPPED = "⏭ <b>{title}</b> — пропущено."
+SNOOZED = "⏰ <b>{title}</b> — напомню в {time}."
+SNOOZE_TOO_LATE = "Отложить можно только сегодняшнее напоминание"
+SUMMARY_HEADER = "🌙 <b>Итоги дня</b>"
+
 # /stats
 STATS_HEADER = "📊 <b>Прогресс</b>"
 STATS_STREAK = "🔥 Серия: {current} · рекорд: {best}"

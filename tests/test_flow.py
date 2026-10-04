@@ -2,15 +2,10 @@
 
 from datetime import datetime
 from itertools import count
-from typing import Any
 
 import pytest
 from aiogram import Bot, Dispatcher
-from aiogram.client.default import DefaultBotProperties
-from aiogram.client.session.base import BaseSession
-from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.methods import EditMessageText, SendMessage, TelegramMethod
 from aiogram.types import CallbackQuery, Chat, Message, Update
 from aiogram.types import User as TgUser
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -18,40 +13,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from bot.db.repositories import habits as habits_repo
 from bot.db.repositories import users
 from bot.dispatcher import build_dispatcher
+from bot.keyboards.habits import reminder_keyboard
+from bot.services.schedule import local_today
+from tests.fakes import FakeSession, make_bot
 
 USER_ID = 100
 CHAT = Chat(id=USER_ID, type="private")
 TG_USER = TgUser(id=USER_ID, is_bot=False, first_name="Tester")
-
-
-class FakeSession(BaseSession):
-    """Запоминает вызовы Bot API вместо отправки в Telegram."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.calls: list[TelegramMethod[Any]] = []
-
-    async def make_request(self, bot: Bot, method: TelegramMethod[Any], timeout: int | None = None):  # type: ignore[no-untyped-def]
-        self.calls.append(method)
-        if isinstance(method, SendMessage | EditMessageText):
-            return Message(message_id=1, date=datetime.now(), chat=CHAT, text=method.text)
-        return True
-
-    async def stream_content(self, *args: Any, **kwargs: Any):  # type: ignore[no-untyped-def]
-        raise NotImplementedError
-
-    async def close(self) -> None:
-        pass
-
-    def texts(self) -> list[str]:
-        return [c.text for c in self.calls if isinstance(c, SendMessage | EditMessageText)]
-
-    def last_markup_buttons(self) -> list[tuple[str, str]]:
-        for call in reversed(self.calls):
-            markup = getattr(call, "reply_markup", None)
-            if markup is not None:
-                return [(b.text, b.callback_data) for row in markup.inline_keyboard for b in row]
-        return []
 
 
 class Harness:
@@ -69,6 +37,9 @@ class Harness:
         data = next(
             d for t, d in self.api.last_markup_buttons() if t.startswith(button_text_prefix)
         )
+        await self.press_data(data)
+
+    async def press_data(self, data: str) -> None:
         query = CallbackQuery(
             id=str(next(self.ids)),
             from_user=TG_USER,
@@ -99,8 +70,7 @@ def harness(session_factory: async_sessionmaker[AsyncSession]) -> Harness:
     _proxy.factory = session_factory
     _dp.fsm.storage = MemoryStorage()
     api = FakeSession()
-    bot = Bot("42:TEST", session=api, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    return Harness(_dp, bot, api)
+    return Harness(_dp, make_bot(api), api)
 
 
 async def test_add_habit_then_mark_done(
@@ -181,3 +151,51 @@ async def test_stranger_is_ignored(harness: Harness) -> None:
     stranger = TgUser(id=999, is_bot=False, first_name="X")
     await harness.send("/start", user=stranger)
     assert harness.api.calls == []
+
+
+async def _habit_id(session_factory: async_sessionmaker[AsyncSession]) -> int:
+    async with session_factory() as s:
+        user = await users.get_by_telegram_id(s, USER_ID)
+        assert user is not None
+        [habit] = await habits_repo.list_active(s, user.id)
+        return habit.id
+
+
+def _reminder_button(habit_id: int, prefix: str) -> str:
+    markup = reminder_keyboard(habit_id, local_today("Asia/Almaty"))
+    return next(
+        b.callback_data for row in markup.inline_keyboard for b in row if b.text.startswith(prefix)
+    )
+
+
+async def test_reminder_done_button(
+    harness: Harness, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    await harness.send("/add")
+    await harness.send("Витамины")
+    await harness.press("Готово")
+    await harness.send("10:00")
+    habit_id = await _habit_id(session_factory)
+
+    await harness.press_data(_reminder_button(habit_id, "✅"))
+    assert harness.api.texts()[-1] == "✅ <b>Витамины</b> — сделано!"
+
+    await harness.send("/today")
+    assert "🎉 Всё выполнено!" in harness.api.texts()[-1]
+
+
+async def test_reminder_snooze_button(
+    harness: Harness, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    await harness.send("/add")
+    await harness.send("Прогулка")
+    await harness.press("Готово")
+    await harness.send("18:00")
+    habit_id = await _habit_id(session_factory)
+
+    await harness.press_data(_reminder_button(habit_id, "⏰"))
+    assert "напомню в" in harness.api.texts()[-1]
+
+    async with session_factory() as s:
+        habit = await habits_repo.get_owned(s, habit_id, 1)
+        assert habit is not None and habit.snoozed_until is not None

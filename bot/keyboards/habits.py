@@ -62,6 +62,22 @@ def day_keyboard(items: Sequence[DayItem], day: date) -> InlineKeyboardMarkup:
     return kb.as_markup()
 
 
+def reminder_keyboard(habit_id: int, day: date) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    iso = day.isoformat()
+    for text, action in (
+        ("✅ Сделал", HabitAction.DONE),
+        ("⏭ Пропустить", HabitAction.SKIP),
+        ("⏰ Через час", HabitAction.SNOOZE),
+    ):
+        kb.button(
+            text=text,
+            callback_data=HabitCb(action=action, habit_id=habit_id, day=iso, reminder=True),
+        )
+    kb.adjust(2, 1)
+    return kb.as_markup()
+
+
 def archive_choice_keyboard(habits: Sequence[Habit]) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     for habit in habits:
