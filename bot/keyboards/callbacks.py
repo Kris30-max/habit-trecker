@@ -33,3 +33,27 @@ class DaysCb(CallbackData, prefix="d"):
 
 class NoReminderCb(CallbackData, prefix="nr"):
     pass
+
+
+class EditField(StrEnum):
+    TITLE = "title"
+    DAYS = "days"
+    TIME = "time"
+
+
+class EditCb(CallbackData, prefix="e"):
+    habit_id: int
+    field: EditField | None = None
+
+
+class SettingsAction(StrEnum):
+    TOGGLE_REMINDERS = "rem"
+    SUMMARY = "sum"
+    SUMMARY_OFF = "sum_off"
+    TIMEZONE = "tz"
+    SET_TIMEZONE = "tz_set"
+
+
+class SettingsCb(CallbackData, prefix="s"):
+    action: SettingsAction
+    value: str = ""

@@ -11,10 +11,11 @@ HELP = (
     "/add — добавить привычку\n"
     "/stats — серии и прогресс\n"
     "/list — все привычки\n"
+    "/edit — изменить привычку\n"
     "/delete — убрать привычку в архив\n"
+    "/settings — часовой пояс, напоминания, вечерняя сводка\n"
     "/cancel — прервать текущее действие\n"
-    "/help — эта справка\n\n"
-    "Скоро: напоминания и вечерняя сводка."
+    "/help — эта справка"
 )
 
 CANCELLED = "Отменено."
@@ -54,6 +55,33 @@ LIST_ITEM = "{n}. <b>{title}</b>\n     {days} · {reminder}"
 DELETE_ASK = "Какую привычку убрать в архив?"
 DELETE_CONFIRM = "Убрать <b>{title}</b> в архив? История отметок сохранится."
 DELETE_DONE = "🗄 <b>{title}</b> в архиве."
+
+# /edit
+EDIT_ASK_HABIT = "Какую привычку изменить?"
+EDIT_ASK_FIELD = "<b>{title}</b>\n{days} · {reminder}\n\nЧто меняем?"
+EDIT_ASK_TITLE = "Новое название для <b>{title}</b>:\n\n/cancel — отмена"
+EDIT_ASK_DAYS = "<b>{title}</b>\n\nВ какие дни? Отметь нужные и нажми «Готово»."
+EDIT_ASK_TIME = "Новое время напоминания для <b>{title}</b>, например <i>21:00</i>:"
+EDIT_SAVED = "✏️ Сохранено: <b>{title}</b>\n{days} · {reminder}"
+
+# /settings
+SETTINGS = (
+    "⚙️ <b>Настройки</b>\n\n"
+    "Часовой пояс: <b>{tz}</b> (сейчас {now})\n"
+    "Напоминания: {reminders}\n"
+    "Вечерняя сводка: {summary}"
+)
+SETTINGS_ON = "включены"
+SETTINGS_OFF = "выключены"
+SETTINGS_SUMMARY_OFF = "выключена"
+SETTINGS_ASK_SUMMARY = (
+    "Во сколько присылать итоги дня? Напиши время, например <i>21:30</i>.\n\n/cancel — отмена"
+)
+SETTINGS_ASK_TZ = (
+    "Выбери часовой пояс или напиши его название, например <i>Asia/Almaty</i>.\n\n/cancel — отмена"
+)
+SETTINGS_BAD_TZ = "Не знаю такой часовой пояс. Пример: <i>Asia/Almaty</i>."
+SETTINGS_SAVED = "✅ Сохранено"
 
 # Напоминания (тикер)
 REMINDER = "🔔 Пора: <b>{title}</b>"
