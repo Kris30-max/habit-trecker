@@ -122,7 +122,7 @@ habit-trecker/
 | id | bigserial PK | |
 | telegram_id | bigint UNIQUE NOT NULL | |
 | first_name | text | |
-| timezone | text NOT NULL default `Europe/Moscow` | IANA-имя |
+| timezone | text NOT NULL default `Asia/Almaty` | IANA-имя |
 | summary_time | time NULL | время вечерней сводки, NULL = выкл |
 | reminders_enabled | bool NOT NULL default true | |
 | last_summary_on | date NULL | локальная дата последней сводки (идемпотентность) |
@@ -238,7 +238,7 @@ Callback-фабрики: `HabitAction(action, habit_id, date)`, `DayToggle(mask)
 | `BOT_TOKEN` | Railway Variables, локально `.env` | `123:ABC…` |
 | `ALLOWED_USER_IDS` | Railway / `.env` | `123456789` |
 | `DATABASE_URL` | Railway / `.env` | `postgresql+asyncpg://postgres.<ref>:<pass>@aws-0-<region>.pooler.supabase.com:5432/postgres` |
-| `DEFAULT_TZ` | Railway / `.env` | `Europe/Moscow` |
+| `DEFAULT_TZ` | Railway / `.env` | `Asia/Almaty` |
 | `TICK_SECONDS` | опционально | `60` |
 | `LOG_LEVEL` | опционально | `INFO` |
 

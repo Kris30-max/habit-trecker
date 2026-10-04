@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     bot_token: SecretStr
     allowed_user_ids: Annotated[frozenset[int], NoDecode] = frozenset()
     database_url: SecretStr
-    default_tz: str = "Europe/Moscow"
+    default_tz: str = "Asia/Almaty"
     tick_seconds: int = 60
     log_level: str = "INFO"
 
