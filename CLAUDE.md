@@ -30,6 +30,7 @@ pydantic-settings · zoneinfo · pytest + pytest-asyncio (SQLite in-memory) · r
 bot/
   __main__.py     запуск polling + ticker
   config.py       Settings
+  dispatcher.py   сборка Dispatcher + middlewares (используется и в тестах)
   texts.py        тексты бота
   handlers/       только Telegram-логика
   keyboards/      клавиатуры, CallbackData-фабрики
@@ -91,5 +92,5 @@ alembic upgrade head             # применить миграции
 
 ## Текущий этап
 
-Порядок реализации — TECH_SPEC.md, раздел 13. Шаги 1–2 (каркас, БД) готовы; сейчас: шаг 3 (привычки).
+Порядок реализации — TECH_SPEC.md, раздел 13. Шаги 1–3 (каркас, БД, привычки) готовы; сейчас: шаг 4 (серии и статистика).
 Функции из бэклога не трогаем, пока не закрыт MVP.

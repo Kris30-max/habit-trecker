@@ -1,9 +1,10 @@
 from aiogram import Router
 
-from bot.handlers import common
+from bot.handlers import common, habits_add, habits_list, today
 
 
 def get_root_router() -> Router:
     router = Router()
-    router.include_router(common.router)
+    # common первым: /cancel должен срабатывать в любом состоянии диалога
+    router.include_routers(common.router, habits_add.router, today.router, habits_list.router)
     return router

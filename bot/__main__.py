@@ -1,22 +1,23 @@
 import asyncio
 import logging
 
-from aiogram import Bot, Dispatcher
+from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.types import BotCommand
 
 from bot.config import Settings
 from bot.db.session import create_engine, create_session_factory
-from bot.handlers import get_root_router
-from bot.middlewares.access import AccessMiddleware
-from bot.middlewares.db import DbSessionMiddleware
-from bot.middlewares.user import UserMiddleware
+from bot.dispatcher import build_dispatcher
 
 logger = logging.getLogger(__name__)
 
 COMMANDS = [
-    BotCommand(command="start", description="Начать работу"),
+    BotCommand(command="today", description="Привычки на сегодня"),
+    BotCommand(command="add", description="Добавить привычку"),
+    BotCommand(command="list", description="Все привычки"),
+    BotCommand(command="delete", description="Убрать привычку в архив"),
+    BotCommand(command="cancel", description="Отменить действие"),
     BotCommand(command="help", description="Справка"),
 ]
 
@@ -35,12 +36,7 @@ async def main() -> None:
         token=settings.bot_token.get_secret_value(),
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
-    dp = Dispatcher()
-    # Порядок важен: сначала whitelist, потом сессия БД, потом пользователь
-    dp.update.outer_middleware(AccessMiddleware(settings.allowed_user_ids))
-    dp.update.outer_middleware(DbSessionMiddleware(session_factory))
-    dp.update.outer_middleware(UserMiddleware(settings.default_tz))
-    dp.include_router(get_root_router())
+    dp = build_dispatcher(session_factory, settings.allowed_user_ids, settings.default_tz)
 
     await bot.set_my_commands(COMMANDS)
     await bot.delete_webhook()
