@@ -162,6 +162,21 @@ async def test_archive_via_delete(harness: Harness) -> None:
     assert "Пока нет привычек" in harness.api.texts()[-1]
 
 
+async def test_stats_after_marking(harness: Harness) -> None:
+    await harness.send("/add")
+    await harness.send("Медитация")
+    await harness.press("Готово")
+    await harness.press("🔕")
+    await harness.send("/today")
+    await harness.press("✅ Медитация")
+
+    await harness.send("/stats")
+    text = harness.api.texts()[-1]
+    assert "<b>Медитация</b>" in text
+    assert "Серия: 1 день" in text
+    assert "100% (1/1)" in text
+
+
 async def test_stranger_is_ignored(harness: Harness) -> None:
     stranger = TgUser(id=999, is_bot=False, first_name="X")
     await harness.send("/start", user=stranger)

@@ -49,6 +49,23 @@ async def statuses_for_day(
     return {habit_id: HabitStatus(status) for habit_id, status in rows}
 
 
+async def logs_by_habit(
+    session: AsyncSession, habit_ids: Sequence[int]
+) -> dict[int, dict[date, HabitStatus]]:
+    """Вся история отметок по привычкам: {habit_id: {дата: статус}}."""
+    result: dict[int, dict[date, HabitStatus]] = {habit_id: {} for habit_id in habit_ids}
+    if not habit_ids:
+        return result
+    rows = await session.execute(
+        select(HabitLog.habit_id, HabitLog.date, HabitLog.status).where(
+            HabitLog.habit_id.in_(habit_ids)
+        )
+    )
+    for habit_id, day, status in rows:
+        result[habit_id][day] = HabitStatus(status)
+    return result
+
+
 async def set_status(
     session: AsyncSession, habit_id: int, day: date, status: HabitStatus | None
 ) -> None:

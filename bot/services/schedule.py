@@ -67,6 +67,23 @@ def local_today(tz: str, now: datetime | None = None) -> date:
     return local_now(tz, now).date()
 
 
+def to_local_date(moment: datetime, tz: str) -> date:
+    """Локальная дата момента; наивное время (SQLite) считаем UTC."""
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=UTC)
+    return moment.astimezone(ZoneInfo(tz)).date()
+
+
+def plural_days(n: int) -> str:
+    if n % 10 == 1 and n % 100 != 11:
+        word = "день"
+    elif 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14:
+        word = "дня"
+    else:
+        word = "дней"
+    return f"{n} {word}"
+
+
 def can_mark(day: date, today: date) -> bool:
     """Отмечать можно сегодня и вчера (поздно нажал на вчерашнее напоминание)."""
     return today - timedelta(days=1) <= day <= today
