@@ -87,11 +87,17 @@ alembic upgrade head             # применить миграции
 
 ## Git-процесс
 
-Ветки `feature/*` → PR → `main` → CI → автодеплой Railway.
+Ветки `feature/*` → PR → `main` → CI (ruff + pytest) → Railway (Wait for CI) → деплой.
 Перед коммитом: `ruff check`, `pytest`, проверить, что `.env` не в индексе.
+
+## Бэкапы
+
+`.github/workflows/backup.yml` — по понедельникам 03:00 Алматы (и вручную: Run workflow).
+Дамп `public` шифруется AES-256 (секрет `BACKUP_PASSPHRASE`, копия в локальном `.env`),
+артефакт хранится 90 дней. Восстановление:
+`gpg -d backup.dump.gpg > backup.dump && pg_restore --clean --if-exists --no-owner -d "$URL" backup.dump`
 
 ## Текущий этап
 
-Порядок реализации — TECH_SPEC.md, раздел 13. MVP (шаги 1–6) готов. Дальше: CI и бэкапы
-(нужен токен с `workflow`), 2 недели личного использования, затем бэклог.
+MVP (TECH_SPEC.md, шаги 1–6), CI и бэкапы готовы. Сейчас: 2 недели личного использования.
 Бэклог идей — PROJECT_IDEA.md, раздел 6. Новое — только после 2 недель использования.
