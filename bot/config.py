@@ -22,11 +22,18 @@ class Settings(BaseSettings):
             return frozenset(int(part) for part in value.split(",") if part.strip())
         return value
 
+    @field_validator("bot_token", "default_tz", "log_level", mode="before")
+    @classmethod
+    def _strip(cls, value: object) -> object:
+        # Переменные часто вставляют в панель Railway с лишним пробелом или переносом строки
+        return value.strip() if isinstance(value, str) else value
+
     @field_validator("database_url", mode="before")
     @classmethod
     def _use_asyncpg(cls, value: object) -> object:
         # Supabase отдаёт строку вида postgresql://… — приводим к async-драйверу
         if isinstance(value, str):
+            value = value.strip()
             for prefix in ("postgresql://", "postgres://"):
                 if value.startswith(prefix):
                     return "postgresql+asyncpg://" + value.removeprefix(prefix)
