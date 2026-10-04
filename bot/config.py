@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     bot_token: SecretStr
     allowed_user_ids: Annotated[frozenset[int], NoDecode] = frozenset()
-    database_url: SecretStr | None = None
+    database_url: SecretStr
     default_tz: str = "Europe/Moscow"
     tick_seconds: int = 60
     log_level: str = "INFO"
@@ -24,8 +24,13 @@ class Settings(BaseSettings):
 
     @field_validator("database_url", mode="before")
     @classmethod
-    def _empty_to_none(cls, value: object) -> object:
-        return value or None
+    def _use_asyncpg(cls, value: object) -> object:
+        # Supabase отдаёт строку вида postgresql://… — приводим к async-драйверу
+        if isinstance(value, str):
+            for prefix in ("postgresql://", "postgres://"):
+                if value.startswith(prefix):
+                    return "postgresql+asyncpg://" + value.removeprefix(prefix)
+        return value
 
     @field_validator("default_tz")
     @classmethod

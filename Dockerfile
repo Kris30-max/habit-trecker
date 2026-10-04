@@ -11,5 +11,8 @@ COPY pyproject.toml ./
 COPY bot ./bot
 RUN pip install . && useradd --create-home app
 
+COPY alembic.ini ./
+COPY migrations ./migrations
+
 USER app
-CMD ["python", "-m", "bot"]
+CMD ["sh", "-c", "alembic upgrade head && python -m bot"]
