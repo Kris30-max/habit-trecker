@@ -8,6 +8,8 @@ from bot.db.models import ALL_DAYS, Habit, HabitStatus
 from bot.keyboards.callbacks import (
     DaysAction,
     DaysCb,
+    EditCb,
+    EditField,
     HabitAction,
     HabitCb,
     NoReminderCb,
@@ -74,6 +76,26 @@ def reminder_keyboard(habit_id: int, day: date) -> InlineKeyboardMarkup:
             text=text,
             callback_data=HabitCb(action=action, habit_id=habit_id, day=iso, reminder=True),
         )
+    kb.adjust(2, 1)
+    return kb.as_markup()
+
+
+def edit_choice_keyboard(habits: Sequence[Habit]) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    for habit in habits:
+        kb.button(text=f"✏️ {habit.title}", callback_data=EditCb(habit_id=habit.id))
+    kb.adjust(1)
+    return kb.as_markup()
+
+
+def edit_field_keyboard(habit_id: int) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    for text, field in (
+        ("Название", EditField.TITLE),
+        ("Дни", EditField.DAYS),
+        ("Время напоминания", EditField.TIME),
+    ):
+        kb.button(text=text, callback_data=EditCb(habit_id=habit_id, field=field))
     kb.adjust(2, 1)
     return kb.as_markup()
 

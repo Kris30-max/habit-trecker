@@ -19,7 +19,9 @@ COMMANDS = [
     BotCommand(command="stats", description="Серии и прогресс"),
     BotCommand(command="add", description="Добавить привычку"),
     BotCommand(command="list", description="Все привычки"),
+    BotCommand(command="edit", description="Изменить привычку"),
     BotCommand(command="delete", description="Убрать привычку в архив"),
+    BotCommand(command="settings", description="Настройки"),
     BotCommand(command="cancel", description="Отменить действие"),
     BotCommand(command="help", description="Справка"),
 ]

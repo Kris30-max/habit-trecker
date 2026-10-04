@@ -89,12 +89,6 @@ async def got_no_reminder(
     await query.answer()
 
 
-@router.callback_query(DaysCb.filter())
-@router.callback_query(NoReminderCb.filter())
-async def stale_add_button(query: CallbackQuery) -> None:
-    await query.answer(texts.STALE_BUTTON)
-
-
 async def _finish(
     state: FSMContext, session: AsyncSession, user: User, remind_time: time | None
 ) -> str:

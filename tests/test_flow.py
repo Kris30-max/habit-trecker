@@ -199,3 +199,113 @@ async def test_reminder_snooze_button(
     async with session_factory() as s:
         habit = await habits_repo.get_owned(s, habit_id, 1)
         assert habit is not None and habit.snoozed_until is not None
+
+
+async def _add(harness: Harness, title: str, remind: str | None = None) -> None:
+    await harness.send("/add")
+    await harness.send(title)
+    await harness.press("Готово")
+    if remind is None:
+        await harness.press("🔕")
+    else:
+        await harness.send(remind)
+
+
+async def _db_user(session_factory: async_sessionmaker[AsyncSession]):  # type: ignore[no-untyped-def]
+    async with session_factory() as s:
+        return await users.get_by_telegram_id(s, USER_ID)
+
+
+async def test_edit_title_days_and_time(
+    harness: Harness, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    await _add(harness, "Читать", "21:00")
+
+    await harness.send("/edit")
+    await harness.press("✏️ Читать")
+    await harness.press("Название")
+    await harness.send("Читать книгу")
+    assert "Сохранено: <b>Читать книгу</b>" in harness.api.texts()[-1]
+
+    await harness.send("/edit")
+    await harness.press("✏️ Читать книгу")
+    await harness.press("Дни")
+    await harness.press("Будни")
+    await harness.press("Готово")
+    assert "По будням" in harness.api.texts()[-1]
+
+    await harness.send("/edit")
+    await harness.press("✏️ Читать книгу")
+    await harness.press("Время")
+    await harness.send("07:30")
+    assert "🔔 07:30" in harness.api.texts()[-1]
+
+    await harness.send("/edit")
+    await harness.press("✏️ Читать книгу")
+    await harness.press("Время")
+    await harness.press("🔕")
+    assert "без напоминания" in harness.api.texts()[-1]
+
+
+async def test_edit_time_resets_reminded_today(
+    harness: Harness, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    await _add(harness, "Вода", "09:00")
+    habit_id = await _habit_id(session_factory)
+    async with session_factory() as s:
+        habit = await habits_repo.get_owned(s, habit_id, 1)
+        assert habit is not None
+        habit.last_reminded_on = local_today("Asia/Almaty")
+        await s.commit()
+
+    await harness.send("/edit")
+    await harness.press("✏️ Вода")
+    await harness.press("Время")
+    await harness.send("23:00")
+
+    async with session_factory() as s:
+        habit = await habits_repo.get_owned(s, habit_id, 1)
+        assert habit is not None and habit.last_reminded_on is None
+
+
+async def test_settings_summary_reminders_timezone(
+    harness: Harness, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    await harness.send("/settings")
+    assert "Часовой пояс: <b>Asia/Almaty</b>" in harness.api.texts()[-1]
+
+    await harness.press("🔔 Напоминания: вкл")
+    assert "Напоминания: выключены" in harness.api.texts()[-1]
+    await harness.press("🔕 Напоминания: выкл")
+    assert "Напоминания: включены" in harness.api.texts()[-1]
+
+    await harness.press("🌙 Сводка")
+    await harness.send("21:30")
+    assert "Вечерняя сводка: 21:30" in harness.api.texts()[-1]
+
+    await harness.press("🌍")
+    await harness.press("Москва")
+    assert "<b>Europe/Moscow</b>" in harness.api.texts()[-1]
+
+    await harness.press("🌍")
+    await harness.send("Mars/Base")
+    assert "Не знаю такой часовой пояс" in harness.api.texts()[-1]
+    await harness.send("Asia/Almaty")
+    assert "<b>Asia/Almaty</b>" in harness.api.texts()[-1]
+
+    await harness.press("🌙 Сводка")
+    await harness.press("Выключить")
+    assert "Вечерняя сводка: выключена" in harness.api.texts()[-1]
+
+    user = await _db_user(session_factory)
+    assert user is not None
+    assert (user.timezone, user.summary_time, user.reminders_enabled) == ("Asia/Almaty", None, True)
+
+
+async def test_stale_days_button_after_cancel(harness: Harness) -> None:
+    await harness.send("/add")
+    await harness.send("Йога")
+    await harness.send("/cancel")
+    await harness.press("Готово")
+    answers = [c for c in harness.api.calls if type(c).__name__ == "AnswerCallbackQuery"]
+    assert answers[-1].text == "Эта кнопка устарела"
