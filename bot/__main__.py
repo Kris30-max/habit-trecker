@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 COMMANDS = [
     BotCommand(command="today", description="Привычки на сегодня"),
+    BotCommand(command="stats", description="Серии и прогресс"),
     BotCommand(command="add", description="Добавить привычку"),
     BotCommand(command="list", description="Все привычки"),
     BotCommand(command="delete", description="Убрать привычку в архив"),

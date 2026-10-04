@@ -14,7 +14,8 @@ from bot.handlers.formatting import day_text
 from bot.keyboards.callbacks import HabitAction, HabitCb
 from bot.keyboards.habits import day_keyboard
 from bot.services.habits import day_items
-from bot.services.schedule import can_mark, local_today
+from bot.services.schedule import can_mark, local_today, plural_days
+from bot.services.stats import habit_streak
 
 router = Router(name="today")
 
@@ -49,6 +50,10 @@ async def mark_habit(
 
     status, toast = MARK_ACTIONS[callback_data.action]
     await habits_repo.set_status(session, habit.id, day, status)
+    if status == HabitStatus.DONE:
+        streak = await habit_streak(session, habit, user.timezone, today)
+        if streak > 1:
+            toast = texts.MARKED_DONE_STREAK.format(days=plural_days(streak))
 
     items = await day_items(session, user.id, day)
     if isinstance(query.message, Message):
