@@ -7,6 +7,7 @@ class HabitAction(StrEnum):
     DONE = "done"
     SKIP = "skip"
     UNDO = "undo"
+    SNOOZE = "snz"
     ARCHIVE = "arch"
     ARCHIVE_YES = "arch_y"
     ARCHIVE_NO = "arch_n"
@@ -16,6 +17,7 @@ class HabitCb(CallbackData, prefix="h"):
     action: HabitAction
     habit_id: int
     day: str = ""  # ISO-дата для отметок
+    reminder: bool = False  # кнопка из сообщения-напоминания
 
 
 class DaysAction(StrEnum):

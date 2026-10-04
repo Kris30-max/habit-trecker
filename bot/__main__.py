@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from contextlib import suppress
 
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
@@ -9,6 +10,7 @@ from aiogram.types import BotCommand
 from bot.config import Settings
 from bot.db.session import create_engine, create_session_factory
 from bot.dispatcher import build_dispatcher
+from bot.scheduler.ticker import run_ticker
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +44,13 @@ async def main() -> None:
     await bot.set_my_commands(COMMANDS)
     await bot.delete_webhook()
     logger.info("Bot started, allowed users: %d", len(settings.allowed_user_ids))
+    ticker = asyncio.create_task(run_ticker(bot, session_factory, settings.tick_seconds))
     try:
         await dp.start_polling(bot)
     finally:
+        ticker.cancel()
+        with suppress(asyncio.CancelledError):
+            await ticker
         await bot.session.close()
         await engine.dispose()
 
